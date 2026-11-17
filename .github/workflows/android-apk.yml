@@ -34,7 +34,35 @@ jobs:
           unzip -q NAMEWORLD-Android-Project.zip
           ls -la
           ls -la NAMEWORLD
+      - name: Fix JVM compatibility
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
 
+          p = Path("NAMEWORLD/app/build.gradle.kts")
+          s = p.read_text()
+
+          if "compileOptions" not in s:
+              s = s.replace(
+                  "android {",
+                  """android {
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }""",
+                  1
+              )
+          else:
+              s = s.replace(
+                  "VERSION_1_8",
+                  "VERSION_17"
+              )
+
+          p.write_text(s)
+          PY
       - name: Build Android APK
         working-directory: NAMEWORLD
         run: gradle --no-daemon assembleDebug
